@@ -1,15 +1,16 @@
-const contacts = require("../models/contacts");
+// const contacts = require("../models/contacts");
+const { Contact } = require("../models/contact");
 const { ctrlWrapper } = require("../helpers");
 const { HttpError } = require("../helpers");
 
 const getContacts = async (req, res) => {
-  const result = await contacts.listContacts();
+  const result = await Contact.find({}, "name phone");
   res.json(result);
 };
 
 const getByIdContact = async (req, res) => {
   const { contactId } = req.params;
-  const result = await contacts.getContactById(contactId);
+  const result = await Contact.findById(contactId);
   if (!result) {
     throw HttpError(404, { message: "Not found" });
   }
@@ -17,22 +18,35 @@ const getByIdContact = async (req, res) => {
 };
 
 const postContact = async (req, res) => {
-  const result = await contacts.addContact(req.body);
+  const result = await Contact.create(req.body);
   res.status(201).json(result);
 };
 
 const putContact = async (req, res) => {
   const { contactId } = req.params;
-  const result = await contacts.updateContact(contactId, req.body);
+  const result = await Contact.findByIdAndUpdate(contactId, req.body, {
+    new: true,
+  });
   if (!result) {
     throw HttpError(404, "missing fields");
   }
   return res.json(result);
 };
 
+const patchContact = async (req, res) => {
+  const { contactId } = req.params;
+  const result = await Contact.findByIdAndUpdate(contactId, req.body, {
+    new: true,
+  });
+  if (!result) {
+    throw HttpError(400, { message: "missing field favorite" });
+  }
+  return res.json(result);
+};
+
 const deteleContact = async (req, res) => {
   const { contactId } = req.params;
-  const result = await contacts.removeContact(contactId);
+  const result = await Contact.findByIdAndDelete(contactId);
   if (!result) {
     throw HttpError(404, "Not found");
   }
@@ -45,4 +59,5 @@ module.exports = {
   getByIdContact: ctrlWrapper(getByIdContact),
   deteleContact: ctrlWrapper(deteleContact),
   putContact: ctrlWrapper(putContact),
+  patchContact: ctrlWrapper(patchContact),
 };
