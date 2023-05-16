@@ -3,6 +3,18 @@ const { ctrlWrapper, HttpError } = require("../helpers");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { SECRET_KEY } = process.env;
+const gravatar = require("gravatar");
+const fs = require("fs/promises");
+const path = require("path");
+const Jimp = require("jimp");
+
+const avatarDir = path.join(__dirname, "../", "public", "avatars");
+
+async function resize(resultUload) {
+  const image = await Jimp.read(resultUload);
+  await image.resize(250, 250);
+  image.write(resultUload);
+}
 
 const register = async (req, res) => {
   const { email, password } = req.body;
@@ -14,8 +26,13 @@ const register = async (req, res) => {
   }
   // Хешування паролю
   const result = await bcrypt.hash(password, 10);
+  const avatarURL = gravatar.url(email);
   // Створення юзера з хешованим паролем і поштою
-  const newUser = await User.create({ ...req.body, password: result });
+  const newUser = await User.create({
+    ...req.body,
+    password: result,
+    avatarURL,
+  });
   // Поверненя даних на фронт (пошта)
   res
     .status(201)
@@ -68,10 +85,23 @@ const patchSubscription = async (req, res) => {
   res.json({ id, email, subscription });
 };
 
+const patchAvatar = async (req, res) => {
+  const { _id } = req.user;
+  const { path: tempUpload, originalname } = req.file;
+  const fileName = `${_id}_${originalname}`;
+  const resultUload = path.join(avatarDir, fileName);
+  await fs.rename(tempUpload, resultUload);
+  resize(resultUload);
+  const avatarURL = path.join("avatars", fileName);
+  await User.findByIdAndUpdate(_id, { avatarURL });
+  res.status(200).json({ avatarURL });
+};
+
 module.exports = {
   register: ctrlWrapper(register),
   login: ctrlWrapper(login),
   logout: ctrlWrapper(logout),
   current: ctrlWrapper(current),
   patchSubscription: ctrlWrapper(patchSubscription),
+  patchAvatar: ctrlWrapper(patchAvatar),
 };
