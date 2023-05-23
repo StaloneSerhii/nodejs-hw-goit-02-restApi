@@ -30,7 +30,12 @@ const subscript = Joi.object({
     .required(),
 });
 
+const emailShemas = Joi.object({
+  email: Joi.string().pattern(emailRegexp).required(),
+});
+
 const schemasAuth = {
+  emailShemas,
   registerSchema,
   loginSchema,
   subscript,
