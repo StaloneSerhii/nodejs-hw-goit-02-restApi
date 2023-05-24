@@ -1,6 +1,6 @@
 const { User } = require("../models/users");
 const { ctrlWrapper, HttpError, sendEmail } = require("../helpers");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { SECRET_KEY } = process.env;
 const gravatar = require("gravatar");
